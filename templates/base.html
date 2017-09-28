@@ -1,0 +1,188 @@
+<!doctype html>
+<html>
+  <head>
+    <title>
+      {% block title %}{% endblock %}
+    </title>
+    <style>
+    body {
+      background: {{ conf.base.color_background }};
+      color: {{ conf.base.color_text }};
+      font-family: {{ conf.base.text_font }};
+    }
+
+    a {
+      font-weight: 600;
+      text-decoration: none;
+      color: {{ conf.base.color_dark }};
+    }
+
+    a:hover {
+      opacity: 0.8;
+      text-decoration: underline;
+    }
+
+    table, th, td {
+      border-collapse: collapse;
+      min-width: 120px;
+    }
+
+    table {
+      width: 100%;
+    }
+
+    tr:hover {
+      transition: background-color 0.2s ease;
+      -moz-transition: background-color 0.2s ease;
+      background-color: {{ conf.base.color_lightest }}
+    }
+
+    .header-row:hover {
+      background: none;
+    }
+
+    .alt-row {
+      background-color: green;
+    }
+
+    th, td {
+      padding: 4px 8px;
+      text-align: left;
+      font-size: 0.8em;
+      font-weight: 300;
+    }
+
+    th {
+      padding: 0px 8px 2px 8px;
+      font-weight: 600;
+      border-bottom: 1px solid {{ conf.base.color_darkest }};
+    }
+
+    input, select, textarea {
+      height: 1em;
+      font-size: 0.7em;
+      padding: 6px 8px 8px 8px;
+      vertical-align: middle;
+      border-radius: 4px;
+      border: 0;
+      outline: none;
+      box-shadow: none;
+      margin: 0;
+      display: inline-block;
+      white-space: normal;
+      font-family: Arial;
+      -webkit-box-sizing: content-box;
+      -moz-box-sizing: content-box;
+      box-sizing: content-box;
+      background: {{ conf.base.color_darkest }};
+      color: {{ conf.base.color_lightest }};
+    }
+
+    input:focus, select:focus, textarea:focus {
+      box-shadow: inset 0px 0px 2px 2px {{ conf.base.color_dark }};
+    }
+
+    select {
+      text-align: center;
+      font-weight: 600;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      line-height: normal;
+      position: relative;
+      cursor: pointer;
+    }
+
+    input[type=button] {
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    input[type=button]:hover {
+      opacity: 0.8;
+    }
+
+    .text-input::placeholder {opacity: 0.5; color: {{ conf.base.color_light }};}
+    .text-input::-webkit-input-placeholder {opacity: 0.5; color: {{ conf.base.color_light }};}
+    .text-input:-moz-placeholder {opacity: 0.5; color: {{ conf.base.color_light }};}
+    .text-input::-moz-placeholder {opacity: 0.5; color: {{ conf.base.color_light }};}
+    .text-input:-ms-input-placeholder {opacity: 0.5; color: {{ conf.base.color_light }};}
+
+    .text-button {
+      font-size: 0.7em;
+      cursor: pointer;
+      padding-right: 7px;
+      font-weight: 300;
+      color: {{ conf.base.color_darkest }};
+    }
+
+    .text-button:hover {
+      text-decoration: underline;
+      opacity: 0.8;
+    }
+
+    .fadeable {
+        position: absolute;
+        right: 5000px;
+        top: -5000px;
+        visibility: hidden;
+        opacity: 0;
+    }
+
+    .active-block {
+      position: relative;
+      right: 0px;
+      top: 0px;
+      visibility: visible;
+      opacity: 1;
+      -moz-transition: opacity 0.3s ease-in;
+      transition: opacity 0.3s ease-in;
+    }
+
+    .message-fade-in{
+      opacity: 1;
+      -moz-transition: opacity 0.3s ease-out;
+      transition: opacity 0.3s ease-out;
+    }
+
+    .message-fade-out{
+      opacity: 0;
+      -moz-transition: opacity 0.3s ease-out;
+      transition: opacity 0.3s ease-out;
+    }
+
+    .bottom-menu {
+      position: fixed;
+      width: 100%;
+      min-width: 600px;
+      bottom: 0px;
+      padding: 9px 0px 14px 15px;
+      margin: 0px -10px;
+      background-color: {{ conf.base.color_lightest }};
+    }
+
+    .loading-anim {
+      position: fixed;
+      width: 0%;
+      top: 0px;
+      height: 2px;
+      margin: 0px 20px 0px -10px;
+      opacity: 0;
+      background-color: {{ conf.base.color_dark }};
+    }
+
+    .in-flight {
+      opacity: 1;
+      width: 100%;
+      -moz-transition: width 0.7s ease;
+      transition: width 0.7s ease;
+    }
+    </style>
+    {% block pagestyle %}{% endblock %}
+  </head>
+  <body>
+    <div class="loading-anim"></div>
+    {% block body %}{% endblock %}
+  </body>
+  {% block scripts %}{% endblock %}
+</html>

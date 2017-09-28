@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+  {{ conf.index.title }}
+{% endblock %}
+
+
+{% block pagestyle %}
+<style>
+  #pitch{
+    font-family: {{ conf.base.title_font }};
+    margin-top: 3em;
+    text-align: center;
+  }
+
+  #pitch-big {
+    font-size: 4em;
+  }
+
+  #pitch-explainer {
+    font-size: 1.5em;
+  }
+
+  #messages {
+    height:3em;
+    text-align: center;
+    margin-top: 25px;
+    font-size: 0.9em;
+    color: {{ conf.base.color_warning }};
+  }
+
+  #cockpit-link-container {
+    float: right;
+    padding-right: 18px;
+  }
+
+  .left-half {
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+  }
+
+  .middle {
+    border-radius: 0px;
+    margin-left: 1px;
+  }
+
+  .right-half {
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+    margin-left: 1px;
+  }
+
+  .signup-step {
+    left: 50%;
+    width: 500px;
+    margin-left: -250px;
+    text-align: center;
+  }
+
+  .children-at-right {
+    text-align: right;
+  }
+
+  .fixed-width {
+    width: 300px;
+  }
+
+  .question {
+    width: 175px;
+    max-width: 175px;
+    float: left;
+    font-size: 0.7em;
+    text-align: right;
+    opacity: 0.7;
+    margin-top: 6px;
+    color: {{ conf.base.color_darkest }};
+  }
+
+  .fixed-height {
+    height: 50px;
+  }
+
+  .top-part {
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+  }
+
+  .vmiddle {
+    border-radius: 0px;
+    margin-top: 3px;
+  }
+
+  .bottom-part{
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+    margin-top: 3px;
+  }
+
+  .card-container {
+    width: 300px;
+    display: inline-block;;
+  }
+
+  .payment-label {
+    float: left;
+    font-size: 0.7em;
+    opacity: 0.7;
+    margin-top: 4px;
+    color: {{ conf.base.color_darkest }};
+  }
+
+  #payment-submit {
+    position: relative;
+    top: -25px;
+  }
+
+  .StripeElement {
+    height: 1em;
+    font-size: 0.7em;
+    padding: 5px 8px 8px 8px;
+    vertical-align: middle;
+    border-radius: 4px;
+    -webkit-transition: box-shadow 150ms ease;
+    transition: box-shadow 150ms ease;
+    background-color: {{ conf.base.color_lightest }};
+  }
+
+  .StripeElement--focus {
+    box-shadow: 0px 0px 1px 1px {{ conf.base.color_dark }};
+  }
+
+  .StripeElement--invalid {
+    background-color: {{ conf.base.color_warning_light }};
+    box-shadow: 0px 0px 1px 1px {{ conf.base.color_warning }};
+  }
+
+  .StripeElement--webkit-autofill {
+    background-color: #fefde5 !important;
+  }
+
+  #progress-container {
+    text-align: center;
+    min-width: 725px;
+    margin-bottom: 20px;
+  }
+
+  .progress-step {
+    display: inline-block;
+    max-width: 180px;
+    vertical-align: top;
+    text-align: left;
+  }
+
+  .active-progress-step {
+    opacity: 1;
+    -webkit-transition: opacity 0.5s ease;
+    transition: opacity 0.5s ease;
+  }
+
+  .inactive-progress-step {
+    opacity: 0.5;
+    -webkit-transition: opacity 0.5s ease;
+    transition: opacity 0.5s ease;
+  }
+
+  .progress-name {
+    font-size: 0.8em;
+    font-weight: 600;
+    padding-left: 8px;
+    color: {{ conf.base.color_darkest }};
+    border-bottom: 2px solid {{ conf.base.color_darkest }};
+  }
+
+  .progress-description {
+    font-size: 0.7em;
+    padding: 4px 8px 0px 8px;
+    font-weight: 300;
+    color: {{ conf.base.color_dark }};
+  }
+
+  .finished-text {
+    padding: 20px 20px 0px 10px;
+    text-align: left;
+    font-size: 0.94em;
+    line-height: 1.3em;
+    opacity: 0.9;
+  }
+
+  #signup-flow-container {
+    margin-bottom: 50px;
+  }
+
+  .summary-container {
+    width: 100%;
+    display: table;
+    table-layout: fixed;
+    border: none;
+  }
+
+  .summary-cell {
+    border: none;
+    display: table-cell;
+  }
+
+  .present-text-title {
+    font-size: 0.7em;
+    font-weight: 300;
+  }
+
+  .present-text-content {
+    font-size: 0.94em;
+    font-weight: 300;
+    color: {{ conf.base.color_dark }};
+  }
+
+</style>
+{% endblock %}
+
+
+{% block body %}
+<div id="pitch">
+  <div id="pitch-big">
+    {{ conf.index.pitch_big }}
+  </div>
+  <div id="pitch-explainer">
+    {{ conf.index.pitch_explainer }}
+  </div>
+</div>
+
+<div id="signup-flow-container">
+
+  <div id="messages" class="message-fade-out"></div>
+
+  <div id="progress-container">
+    <div id="progress-step-1" class="progress-step">
+      <div class="progress-name">1. Link your phone</div>
+      <div class="progress-description">
+        After you give us your phone number, we'll text you a confirmation code to make sure you're in control of your device.
+      </div>
+    </div><!--
+ --><div id="progress-step-2" class="progress-step inactive-progress-step">
+      <div class="progress-name">2. Request a call</div>
+      <div class="progress-description">
+        Tell us what you want to talk about and let us know what times are best for you to receive a call.
+      </div>
+    </div><!--
+--><div id="progress-step-3" class="progress-step inactive-progress-step">
+      <div class="progress-name">3. Save payment info</div>
+      <div class="progress-description">
+        We use <a href="https://stripe.com/" target="_blank">Stripe</a> to securely handle your credit or debit card. You won't be charged a cent until after your call.
+      </div>
+    </div><!--
+ --><div id="progress-step-4" class="progress-step inactive-progress-step">
+      <div class="progress-name">4. We call you</div>
+      <div class="progress-description">
+        Fee is $1 per minute, minimum $5 per call. If we call at a bad time, we won't charge you, and we'll try again later.
+      </div>
+    </div>
+  </div>
+
+  <div id="phone-container" class="fadeable signup-step">
+    <input id="phone-input" type="tel" class="text-input left-half" autofocus
+     placeholder="Enter phone number" title="U.S. numbers only!"/><!--
+ --><input id="phone-submit" type="button" class="submit-button right-half"
+     value="Text confirmation code" />
+    </input>
+  </div> 
+
+  <div id="confirmation-code-container" class="fadeable signup-step">
+    <input id="confirmation-code-input" class="text-input left-half"
+     placeholder="Confirmation code" /><!--
+ --><input id="confirmation-code-submit" type="button" class="submit-button middle"
+     value="Submit code" /><!--
+ --><input id="confirmation-code-resend" type="button" class="submit-button right-half"
+     value="Send a new code" />
+  </div>
+
+  <div id="details-container" class="fadeable signup-step children-at-right">
+    <div>
+      <span class="question">What's your name?</span>
+      <input id="monicker-input" type="text" class="text-input fixed-width top-part"
+        placeholder="A nickname or even a fake name is fine."/>
+    </div>
+    <div>
+      <span class="question">What timezone are you in?</span>
+      <select name="timezone" id="timezone-select" class="fixed-width vmiddle">
+        <option value="choose">Select Timezone</option>
+        <option value="eastern">Eastern</option>
+        <option value="central">Central</option>
+        <option value="mountain">Mountain</option>
+        <option value="pacific">Pacific</option>
+        <option value="alaskan">Alaskan</option>
+        <option value="hawaiian">Hawaiian</option>
+      </select>
+    </div>
+    <div>
+      <span class="question">When should we call you?</span>
+      <textarea id="schedule-note-input"
+        class="text-input fixed-width fixed-height vmiddle"></textarea>
+    </div>
+    <div>
+      <span class="question">What would you like to talk about?</span>
+      <textarea id="topic-input"
+        class="text-input fixed-width fixed-height vmiddle"></textarea>
+    </div>
+    <input id="details-submit" type="button" class="submit-button fixed-width bottom-part"
+     value="Submit call request" />
+  </div>
+
+  <div id="payment-container" class="fadeable signup-step">
+    <div class="card-container">
+      <div id="card-element"></div>
+      <label for="card-element" class="payment-label">
+        You will not be charged until after your call.
+      </label>
+    </div>
+    <input id="payment-submit" type="button" class="submit-button"
+     value="Save payment info" />
+  </div>
+
+  <div id="finished-container" class="fadeable signup-step">
+    <div class="summary-container">
+      <span class="present-text-title summary-cell">Name</span>
+      <span class="present-text-title summary-cell">Phone Number</span>
+      <span class="present-text-title summary-cell">Card Ending In</span>
+    </div>
+    <div class="summary-container">
+      <span id="present-name" class="present-text-content summary-cell"></span>
+      <span id="present-phone" class="present-text-content summary-cell"></span>
+      <span id="present-card" class="present-text-content summary-cell"></span>
+    </div>
+    <div class="finished-text">
+      We've received your conversation request and payment details!
+      <br /><br />
+      You will not be charged until after a completed conversation. Our caller will try to call at a time that works well for you (but depending on schedules, we might not have a caller available exactly when you asked). If we call at a bad time, just let us know. You won't be charged, and we'll try again later.
+      <br /><br />
+      After our conversation, your card will be charged a fee of $1 per minute, rounded up to the next minute. All conversations have a 5-minute minimum.
+      <br /> <br />
+      At the end of each conversation, we'll ask if you'd like us to call again. If so, we'll keep your payment information on file, and try to make a subsequent call at the requested time. The same rates apply.
+    </div>
+  </div>
+
+  <div class="bottom-menu">
+    <a class="text-button">[site map]</a>
+    <a class="text-button">[FAQ]</a>
+    <span id="logout-container" class="fadeable">
+      <span id="logout-submit" class="text-button"
+       title="Forget my phone number in this web browser, but keep my number in your database.">
+        [log out]<!--
+   --></span>
+    </span>
+    <span id="phone-delete-container" class="fadeable">
+      <span id="phone-delete-submit" class="text-button"
+       title="Delete my phone number, request details, and payment info from your database and never call me again.">
+        [delete my phone number]<!--
+   --></span>
+    </span>
+    <span id="cockpit-link-container" class="fadeable">
+      <a id="cockpit-link" class="text-button" href="/cockpit">[agent dashboard]</a>
+    </span>
+  </div>
+
+</div>
+
+<div></div>
+{% endblock %}
+
+
+{% block scripts %}
+<script type="text/javascript">var SERVED_SESSION_ID = "{{ session_id }}";</script>
+<script src="https://js.stripe.com/v3/"></script>
+<script type="text/javascript">
+  var strp = {};
+  strp.stripe = Stripe("{{ conf.creds.stripe_publishable_token }}");
+  strp.elements = strp.stripe.elements();
+  strp.card = strp.elements.create("card");
+  strp.card.mount("#card-element");
+</script>
+<script src="static/signup.js"></script>
+{% endblock %}

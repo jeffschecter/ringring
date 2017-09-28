@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+
+{% block title %}Employee Cockpit{% endblock %}
+
+
+{% block pagestyle %}
+<style>
+  #cockpit-container {
+    margin-bottom: 50px;
+  }
+
+  .small-bold {
+    font-size: 0.7em;
+    font-weight: 600;
+  }
+
+  .action-row {
+    cursor: pointer;
+  }
+
+  #messages {
+    width: 100%;
+    font-size: 0.7em;
+    font-weight: 300;
+    padding-left: 10px;
+  }
+
+  .messages-warn {
+    color: {{ conf.base.color_warning }};
+  }
+
+  .messages-ok {
+    color: {{ conf.base.color_ok }};
+  }
+
+  #client-history-container {
+    float: left;
+    min-height: calc(100vh - 70px);
+    max-height: calc(100vh - 70px);
+    margin-right: 30px;
+    overflow: scroll;
+    min-width: 250px;
+    max-width: 250px;
+  }
+
+  #client-history-header {
+    width: 245px;
+    font-weight: 600;
+    font-size: 0.7em;
+    text-align: center;
+    padding-bottom: 1px;
+    color: {{ conf.base.color_dark }};
+  }
+
+  .client-history-item {
+    padding: 8px 8px 16px 8px;
+    font-size: 0.7em;
+    border-top: 1px solid {{ conf.base.color_middle }};
+  }
+
+  .client-history-date {
+    font-weight: 600;
+    color: {{ conf.base.color_dark }};
+  }
+
+  .client-history-duration {
+    font-weight: 300;
+    padding-right: 12px;
+    float: right;
+    color: {{ conf.base.color_dark }};
+  }
+
+  .client-history-note {
+    padding-top: 4px;
+    font-weight: 300;
+  }
+
+  .client-history-empty {
+    font-weight: 300;
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  #client-summary {
+    min-width: 605px;
+  }
+
+  .summary-block {
+    display: inline-block;
+    min-width: 100px;
+    max-width: 300px;
+    vertical-align: top;
+  }
+
+  .summary-header {
+    font-size: 0.7em;
+    font-weight: 600;
+    padding-left: 8px;
+    border-bottom: 1px solid {{ conf.base.color_darkest }};
+  }
+
+  .summary-content {
+    font-size: 0.9em;
+    font-weight: 300;
+    padding: 8px;
+  }
+
+  #call-notes {
+    display: inline-block;
+    border-radius: 0px;
+    font-weight: 300;
+    font-size: 0.8em;
+    min-height: 100px;
+    max-height: 100px;
+    min-width: 450px;
+    max-width: 450px;
+    padding: 8px;
+    margin: 15px 0px;
+    overflow: scroll;
+    color: {{ conf.base.color_dark }};
+    border: 1px solid {{ conf.base.color_darkest }};
+    outline: none;
+  }
+
+  #call-notes:focus, #days-to-next-call:focus {
+    outline: none;
+    box-shadow: inset 0px 0px 1px 1px {{ conf.base.color_middle }};
+  }
+
+  div[contentEditable=true]:empty:not(:focus):before {
+    content: attr(data-placeholder);
+    float: left;
+    opacity: 0.5;
+    color: {{ conf.base.color_dark }};
+  }
+
+  #debrief-header {
+    font-size: 0.9em;
+    font-weight: 600;
+    margin-bottom: 6px
+  }
+
+  .radio-option, #days-to-next-container {
+    font-size: 0.9em;
+    font-weight: 300;
+    line-height: 1.4em;
+  }
+
+  #days-to-next-container {
+    margin: 16px 0px;
+  }
+
+  #days-to-next-call {
+    border-radius: 0px;
+    text-align: center;
+    background: none;
+    outline: none;
+    max-width: 35px;
+    color: {{ conf.base.color_dark }};
+    border: 1px solid {{ conf.base.color_darkest }};
+  }
+
+</style>
+{%block cashoutstyle %}{% endblock %}
+{% endblock %}
+
+
+{% block body %}
+<div id="cockpit-container">
+
+<div id="dashboard" class="fadeable active-block">
+  <div id="first-calls-container">
+    <div id="first-calls-table"></div>
+  </div>
+
+  <div id="followup-calls-container">
+    <div id="followup-calls-table"></div>
+  </div>
+</div>
+
+<div id="detail" class="fadeable">
+  <div id="client-history-container">
+    <div id="client-history-header">Call History</div>
+    <div id="client-history"></div>
+  </div>
+  <div id="client-summary">
+    <div class="summary-block">
+      <div class="summary-header">Name</div>
+      <div id="client-monicker" class="summary-content"></div>
+    </div><!--
+ --><div class="summary-block">
+      <div class="summary-header">Timezone</div>
+      <div id="client-timezone" class="summary-content"></div>
+    </div><!--
+ --><div class="summary-block">
+      <div class="summary-header">Schedule</div>
+      <div id="client-schedule" class="summary-content"></div>
+    </div><!--
+ --><div class="summary-block">
+      <div class="summary-header">Notes</div>
+      <div id="client-note" class="summary-content"></div>
+    </div>
+  </div>
+  <div id="call-notes-container" class="fadeable">
+    <div id="call-notes" class="text-input" contenteditable="true"
+     data-placeholder="Enter notes from your call here."></div>
+  </div>
+  <div id="call-container">
+    <div id="initiate-call" class="fadeable active-block">
+      <input id="exit-detail" type="button" value="Back" />
+      <input id="initiate-call-button" type="button" value="Start phone call" />
+    </div>
+    <div id="in-call" class="fadeable">
+      <div id="call-status"></div>
+      <input id="hangup-button" type="button" value="Hang up" />
+    </div>
+    <div id="post-call" class="fadeable">
+      <div id="debrief-header">How'd the call go?s</div>
+      <form id="debrief-form">
+        <div class="radio-option">
+          <input type="radio" name="debrief-category" value="retry" id="default-category"
+           checked>
+          They didn't have time to talk. Call them back later.
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="debrief-category" value="cancel">
+          They didn't want to talk, now or ever. Cancel their call request.
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="debrief-category" value="followup">
+          We had a conversation, and they want me to call them again.
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="debrief-category" value="final">
+          We had a conversation, but they don't want any further calls.
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="debrief-category" value="unsatisfied">
+          We had a conversation, but they hated it so much that we shouldn't charge them.
+        </div>
+      </form>
+      <div id="days-to-next-container">
+        Wait
+        <input id="days-to-next-call" type="number" />
+        days before calling this client again.
+      </div>
+      <input id="submit-debrief-button" type="button" value="Finish call & submit debrief" />
+    </div>
+  </div>
+</div>
+
+<div id="cashout-info-collection-container" class="fadeable">
+  {% block cashout_info %}{% endblock %}
+</div>
+
+<div id="cashout-withdraw-container" class="fadeable">
+  {% block cashout_withdraw %}{% endblock %}
+</div>
+
+<div class="bottom-menu">
+  <a id="refresh-calls" class="text-button">[refresh]</a>
+  <span id="agent-greeting" class="small-bold">Hello, Agent!</span>
+  <span id="messages"></span>
+</div>
+
+</div>
+<div></div>
+{% endblock %}
+
+
+{% block scripts %}
+<script type="text/javascript"
+ src="https://media.twiliocdn.com/sdk/js/client/v1.4/twilio.min.js"></script>
+<script src="static/cockpit.js"></script>
+{% block cashoutscripts %}{% endblock %}
+{% endblock %}

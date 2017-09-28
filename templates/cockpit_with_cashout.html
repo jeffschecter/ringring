@@ -1,0 +1,228 @@
+{% extends "cockpit_base.html" %}
+
+
+{% block cashoutstyle %}
+<style>
+  .cashout-step-container {
+    font-weight: 300;
+    padding: 0px 12px 12px 12px;
+    margin-bottom: 35px;
+  }
+
+  .cashout-explainer {
+    font-size: 0.7em;
+    line-height: 1.2em;
+    margin: 12px 0px 12px 0px;
+  }
+
+  .cashout-info-block {
+    display: inline-block;
+    max-width: 300px;
+    min-width: 300px;
+    vertical-align: top;
+  }
+
+  .cashout-info-header {
+    font-weight: 600;
+    font-size: 0.7em;
+    margin-top: 8px;
+  }
+
+  .cashout-info-label {
+    padding: 8px 0px 2px 0px;
+    font-size: 0.7em;
+  }
+
+  .cashout-textinput {
+    border-radius: 0px;
+    text-align: left;
+    background: none;
+    outline: none;
+    max-width: 250px;
+    min-width: 250px;
+    color: {{ conf.base.color_dark }};
+    border: 1px solid {{ conf.base.color_darkest }};
+  }
+
+  .textinput-verified {
+    border: 1px solid {{ conf.base.color_ok }};
+    background-color: {{ conf.base.color_ok_light }};
+  }
+
+  .textinput-error {
+    border: 1px solid {{ conf.base.color_warning }};
+    background-color: {{ conf.base.color_warning_light }};
+  }
+
+  .cashout-sub-info {
+    display: inline-block;
+  }
+
+  .cashout-block-submit-button {
+    display: block;
+    margin-top: 26px;
+    margin-left: 31px;
+  }
+
+  .short {
+    max-width: 110px;
+    min-width: 110px;
+    margin-right: 8px;
+  }
+
+  #cashout-id-document {
+    background: none;
+    color: {{ conf.base.color_darkest }};
+  }
+</style>
+{% endblock %}
+
+
+{% block cashout_info %}
+<div id="cashout-dirdep-container" class="cashout-step-container fadeable active-block">
+  <div class="cashout-info-header">Set Up Direct Deposit</div>
+  <div class="cashout-explainer">
+    We need to be able to pay you for your work!
+    <br /><br />
+    We use <a href="https://stripe.com/" target="_blank">Stripe</a> to both collect payments from our customers and to pay out your commission. To receive payments, you must submit your bank account and routing number, as well as some identity verification information required by Stripe. By submitting your information, you verify that you have read and agree to <a href="https://stripe.com/us/connect-account/legal" target="_blank">Stripe's Connected Account agreement</a>.
+    <br /> <br />
+    Your account and routing numbers are not stored in our database: instead, they are securely handled by Stripe, and we send Stripe a message whenever we need to transfer money into your account. We do store your identity verificaton info and address, so that we can re-confirm your identity if Stripe requires.
+  </div>
+  <div class="cashout-info-header">What You Earn</div>
+  <div class="cashout-explainer">
+    You are an independent contractor working on a freelance basis, whenever and for as long as you like. You will be paid a commission of $30 per hour of duration for each successful call accepted by the client. Your commission is earned at a rate of 5 cents per 6 seconds and is not pro-rated. No commission is earned for time spent on other activities (including waiting for the client to pick up the phone), or on calls where the client does not answer or does not wish to have a conversation.
+    <br /><br />
+    All call durations are measured by Twilio, the software provider we use to make phone calls between you and our clients.
+    <br /><br />
+    If you bill a customer for a call and the customer initiates a charge-back, you will earn no commission on that call. In addition, Stripe charges a fee of $15 per charge-back, which will be evenly split between you and the company. Don't worry: this almost never happens, as long as you remember to properly indicate whether a conversation was successful and should be billed, or if the customer was unable to talk and should not be charged.
+  </div>
+  <div class="cashout-info-header">Cashing Out</div>
+  <div class="cashout-explainer">
+    As you work and earn commission, we will keep track of the balance that we owe you. Rather than being paid on a set schedule, you have the option to "cash out" whenever your balance has reached $100 or more. Once you request a cash out, it takes about 2 business days for the funds to appear in your account. You may cash out at most once every 10 days.
+  </div>
+  <div class="cashout-explainer">
+  </div>
+  <div>
+    <div class="cashout-info-block">
+      <div class="cashout-info-header">Identity Verification</div>
+      <div class="cashout-info-label">Full Given Name</div>
+      <input id="cashout-given-name" type="text" class="cashout-textinput"
+       placeholder="John">
+      <div class="cashout-info-label">Family Name</div>
+      <input id="cashout-family-name" type="text" class="cashout-textinput"
+       placeholder="Doe">
+      <div class="cashout-info-label">Date of Birth (MM/DD/YYYY)</div>
+      <input id="cashout-dob" type="text" class="cashout-textinput"
+       placeholder="MM/DD/YYYY">
+      <div class="cashout-info-label">Social Security Number Last 4 Digits</div>
+      <input id="cashout-ssn" type="text" class="cashout-textinput"
+       placeholder="XXXX">
+    </div>
+    <div class="cashout-info-block">
+      <div class="cashout-info-header">Address</div>
+      <div class="cashout-info-label">Address Line 1</div>
+      <input id="cashout-addr-1" type="text" class="cashout-textinput"
+       placeholder="Street Address (eg, 123 Elm Street)">
+      <div class="cashout-info-label">Address Line 2</div>
+      <input id="cashout-addr-2" type="text" class="cashout-textinput"
+       placeholder="Unit Number (Eg, Apt. 45)">
+      <div class="cashout-info-label">City</div>
+      <input id="cashout-addr-city" type="text" class="cashout-textinput"
+       placeholder="Eg, Springfield">
+      <span class="cashout-sub-info">
+        <div class="cashout-info-label">State (2-letter code)</div>
+        <input id="cashout-addr-state" type="text" class="cashout-textinput short"
+         placeholder="XX">
+      </span>
+      <span class="cashout-sub-info">
+        <div class="cashout-info-label">Zip Code</div>
+        <input id="cashout-addr-zip" type="text" class="cashout-textinput short"
+         placeholder="Exactly 5 digits">
+      </span>
+    </div>
+    <div class="cashout-info-block">
+      <div class="cashout-info-header">Bank Account Direct Deposit Info</div>
+      <div class="cashout-info-label">Account Number</div>
+      <input id="cashout-account-number" type="text" class="cashout-textinput"
+       placeholder="Between 6 and 16 digits">
+      <div class="cashout-info-label">Routing Number</div>
+      <input id="cashout-routing-number" type="text" class="cashout-textinput"
+       placeholder="Exactly 9 digits">
+      <div class="cashout-info-label">I have read and agree to all of the above conditions.</div>
+      <input id="cashout-consent" type="text" class="cashout-textinput"
+       placeholder="Type out 'I Agree'">
+      <input id="cashout-submit-info" type="button" class="cashout-block-submit-button"
+       value="Submit Direct Deposit Information">
+    </div>
+  </div>
+</div>
+
+<div id="cashout-full-ssn-container" class="cashout-step-container fadeable">
+  <div class="cashout-info-header">
+    Stripe has asked us for your full Social Security number.
+  </div>
+  <div class="cashout-explainer">
+    As an extra identity verification step, Stripe sometimes asks us for additional information about the holder of a bank account in order to comply with federal <a href="https://en.wikipedia.org/wiki/Know_your_customer" target="_blank">Know Your Customer</a> regulations. This is a pain in the butt for us, but helps the government catch terrorists and mafiosos! In theory.
+    <br /><br />
+    Whatever.
+    <br /><br />
+    Your full SSN is not stored anywhere in our database. We just pass it on securely straight through to Stripe, who presumably cross-references it with your bank to make sure you're a real human being and not on a watch list for money laundering or something.
+  </div>
+  <div class="cashout-info-block">
+    <div class="cashout-info-header">SSN</div>
+    <div class="cashout-info-label">Full Social Security Number</div>
+    <input id="cashout-full-ssn" type="text" class="cashout-textinput"
+     placeholder="XXXXXXXXX (9 digits)">
+    <input id="cashout-submit-full-ssn" type="button" class="cashout-block-submit-button"
+     value="Verify Full SSN">
+  </div>
+</div>
+
+<div id="cashout-id-document-container" class="cashout-step-container fadeable">
+  <div class="cashout-info-header">
+    Stripe has asked us for a photo of a government-issued ID document.
+  </div>
+  <div class="cashout-explainer">
+    As an extra identity verification step, Stripe sometimes asks us for additional information about the holder of a bank account in order to comply with federal <a href="https://en.wikipedia.org/wiki/Know_your_customer" target="_blank">Know Your Customer</a> regulations. This sometimes includes a scan or photo of a government-issued ID document.
+    <br /><br />
+    Please take and upload a color photograph of a valid U.S. drivers' license, passport, or government-issued ID card. Make sure that the photograph is not blurry, and that the text in the document can be easily read.
+    <br /><br />
+    Make sure your file is in .jpg format, and that the file size is at most 250 KB.
+    <br /><br />
+    Your ID document is not stored anywhere in our database. We just pass it on securely straight through to Stripe.
+  </div>
+  <div class="cashout-info-block">
+    <div class="cashout-info-header">ID Document</div>
+    <div class="cashout-info-label">Government Issued ID</div>
+    <form>
+      <input id="cashout-id-document" type="file" accept="image/jpeg"
+       class="cashout-fileinput">
+    </form>
+    <input id="cashout-submit-id-document" type="button" class="cashout-block-submit-button"
+     value="Upload ID Document">
+  </div>
+</div>
+
+<div id="cashout-pending-container" class="cashout-step-container fadeable">
+  <div class="cashout-info-header">
+    Stripe is reviewing your documentation.
+  </div>
+  <div class="cashout-explainer">
+    Usually our contractors have payments green-lit right away, but it looks like Stripe needs a bit more time to confirm your submitted information. This typically takes just 1-2 business days. Until your details are verified, we have no way to pay you for your work, so check back here in a day or two!
+  </div>
+</div>
+{% endblock %}
+
+
+{% block cashout_withdraw %}
+{% endblock %}
+
+
+{% block cashoutscripts %}
+<script src="https://js.stripe.com/v3/"></script>
+<script type="text/javascript">
+  var strp = {};
+  strp.stripe = Stripe("{{ conf.creds.stripe_publishable_token }}");
+</script>
+<script src="static/cashout.js"></script>
+{% endblock %}
