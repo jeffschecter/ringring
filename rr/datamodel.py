@@ -124,6 +124,13 @@ class EmployeePaymentInfo(Model):
   due_by = ndb.DateTimeProperty()
   stripe_status_blob = ndb.StringProperty()
 
+  @classmethod
+  def get_by_account_id(cls, account_id):
+    epis = cls.query(cls.stripe_account_id == account_id).fetch()
+    if epis:
+      return epis[0]
+
+
 
 class Call(Model):
   """An instance of a call from an agent to a client.

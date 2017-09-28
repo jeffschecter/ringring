@@ -13,12 +13,20 @@ EPOCH = datetime.datetime.utcfromtimestamp(0)
 stripe.api_key = conf.creds.stripe_auth
 
 
+# ---------------------------------------------------------------------------- #
+# Utils.                                                                       #
+# ---------------------------------------------------------------------------- #
+
 def webhook_event(raw_event, sig, secret):
   try:
     return stripe.Webhook.construct_event(raw_event, sig, secret)
   except Exception as e:
     logging.error("Error in Stripe webhook: {}".format(e))
 
+
+# ---------------------------------------------------------------------------- #
+# Account creation.                                                            #
+# ---------------------------------------------------------------------------- #
 
 def create_customer(sid, user_agent, stripe_token):
   try:
@@ -43,6 +51,10 @@ def create_employee_account(employee, stripe_token):
         "Failed to create Stripe payable account for employee {}: {}".format(
             employee.key.id(), e))
 
+
+# ---------------------------------------------------------------------------- #
+# ID verification.                                                             #
+# ---------------------------------------------------------------------------- #
 
 def basic_id_verification(employee, epi):
   acct = stripe.Account.retrieve(epi.stripe_account_id)
@@ -102,3 +114,14 @@ def add_id_document(file, employee, epi):
     logging.error("Failed to attach ID document for {}".format(
         employee.key.id()))
   return acct
+
+
+def pull_account_update(stripe_account_id):
+  employee, epi = db.get_payment_info_by_stripe_id(stripe_account_id)
+  prev_status = epi.verification_status
+  prev_vfn = employee.verification_fields_needed
+  acct = stripe.Account.retrieve(epi.stripe_account_id)
+  db.update_payment_info_status(employee, epi, acct)
+  logging.info("Pulled update on Stripe account for {}: {} -> {}".format(
+      employee.key.id(), prev_status, epi.verification_status))
+  return employee, epi, prev_status, prev_vfn

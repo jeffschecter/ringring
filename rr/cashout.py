@@ -9,6 +9,7 @@ from rr import auth
 from rr import conf
 from rr import db
 from rr import strp
+from rr import tw
 from rr import utils
 
 
@@ -79,10 +80,10 @@ def submit_id_document(employee=None, datauri=None, **kwargs):
 # ---------------------------------------------------------------------------- #
 
 def strp_events_account(event):
-  logging.info("STRIPE ACCOUNT EVENT {}".format(event))
   return _response(received=True)
 
 
 def strp_events_connect(event):
-  logging.info("STRIPE CONNECT EVENT {}".format(event))
+  if event.type == "account.updated":
+    tw.send_account_update_alert(*strp.pull_account_update(event.account))
   return _response(received=True)

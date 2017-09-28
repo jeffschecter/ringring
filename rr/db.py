@@ -352,6 +352,15 @@ def get_payment_info(employee):
   return datamodel.EmployeePaymentInfo.get_by_id("0", parent=employee.key)
 
 
+def get_payment_info_by_stripe_id(stripe_account_id):
+  epi = datamodel.EmployeePaymentInfo.get_by_account_id(stripe_account_id)
+  if epi is None:
+    raise KeuyError("No payment info found for Stripe account {}".format(
+        stripe_account_id))
+  employee = epi.key.parent().get()
+  return employee, epi
+
+
 VALID_COUNTRIES = ["US"]
 VALID_US_STATES = [
     "AL", "AK", "AS", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FM", "FL",

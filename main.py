@@ -23,7 +23,10 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 def get_post_params():
   req = flask.request
   params = dict(json.loads(req.data))
-  logging.info("POST PARAMS: {}".format(params))
+  display_params = dict(params)
+  if "datauri" in display_params:
+    display_params["datauri"] = display_params["datauri"][:100] + "..."
+  logging.info("POST PARAMS: {}".format(display_params))
   params.update({"user_agent": req.user_agent.string})
   params.update({"ip_address": req.headers.get(
       "X-Forwarded-For", req.remote_addr)})

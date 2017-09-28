@@ -1,3 +1,4 @@
+import json
 import logging
 
 import requests_toolbelt.adapters.appengine
@@ -16,7 +17,12 @@ CLIENT = Client(*CREDS)
 ERROR = exceptions.TwilioRestException
 
 
-def send(digits, text):
+# ---------------------------------------------------------------------------- #
+# Text messaging.                                                              #
+# ---------------------------------------------------------------------------- #
+
+def _send(digits, text):
+  logging.info("Sending {} message '{}'".format(digits, text))
   CLIENT.messages.create(
     to="1" + str(digits),
     from_=conf.creds.tw_phone,
@@ -27,8 +33,51 @@ def send_confirmation_code(sess, phone):
   digits = phone.key.id()
   if db.check_cooldown(phone):
     raise ValueError("Tried to text a number in cooldown: {}".format(digits))
-  send(digits, "CONFIRMATOIN CODE: {}".format(sess.confirmation_code))
+  _send(digits, "CONFIRMATOIN CODE: {}".format(sess.confirmation_code))
 
+
+MSG_VERIFICATION_TMPL = (
+    "Stripe has requested {} for direct deposit identity "
+    "verification purposes. Please log on to {} to complete the ID "
+    "verification process.").format("{}", conf.creds.domain)
+MSG_PID = MSG_VERIFICATION_TMPL.format("your full Social Security number")
+MSG_DOC = MSG_VERIFICATION_TMPL.format("a photo of government-issued ID")
+MSG_REVIEW = (
+    "Stripe has placed your {} direct deposit account under review. We'll "
+    "send you a text when the review is complete!").format(conf.creds.domain)
+MSG_ACTIVATED = "Stripe has activated your {} direct deposit account!".format(
+    conf.creds.domain)
+
+
+def send_account_update_alert(employee, epi, prev_status, prev_vfn):
+  digits = employee.key.id()
+  was_verified = prev_status == "verified"
+  is_verified = epi.verification_status == "verified"
+  raw_vfn = employee.verification_fields_needed
+  if raw_vfn:
+    vfn = json.loads(employee.verification_fields_needed)
+  else:
+    vfn = []
+  msg = None
+
+  # What message should we send if any?
+  if vfn and (raw_vfn != prev_vfn):
+    if "legal_entity.personal_id_number" in vfn:
+      msg = MSG_PID
+    elif "legal_entity.verification.document" in vfn:
+      msg = MSG_DOC
+  elif was_verified and (not is_verified):
+    msg = MSG_REVIEW
+  elif (not was_verified) and is_verified:
+    msg = MSG_ACTIVATED
+
+  if msg is not None:
+    _send(digits, msg)
+
+
+# ---------------------------------------------------------------------------- #
+# Phone.                                                                       #
+# ---------------------------------------------------------------------------- #
 
 def call_token():
     capability = ClientCapabilityToken(*CREDS)
