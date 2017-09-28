@@ -53,6 +53,39 @@ def create_employee_account(employee, stripe_token):
 
 
 # ---------------------------------------------------------------------------- #
+# Moving money.                                                                #
+# ---------------------------------------------------------------------------- #
+
+def _charge_customer(digits, cents, idempotency_token):
+  phone = db.get_phone(digits)
+  try:
+    stripe_charge = stripe.Charge.create(
+        amount=cents,
+        currency="usd",
+        customer=phone.stripe_customer_id,
+        idempotency_token=idempotency_token)
+    return stripe_charge.id
+  except stripe.error as e:
+    logging.error(
+        "Failed to charge client {} for {} cents: {}".format(
+            phone.key.id(), cents, e))
+
+
+def charge_for_call(employee, call):
+  charge = db.creat_charge(call)
+  if charge:
+    #TODO actually charge with Stripe
+    charge_id = _charge_customer(call.phone, charge.fee_cents, call.key.id())
+    success = charge_id is not None
+    db.mark_charge_result(charge, success, charge_id)
+  else:
+    success = False
+  if success:
+    ele = db.create_ledger_entry_from_charge(employee, charge)
+  return success
+
+
+# ---------------------------------------------------------------------------- #
 # ID verification.                                                             #
 # ---------------------------------------------------------------------------- #
 

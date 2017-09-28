@@ -128,9 +128,13 @@ def debrief(
   charge = category in ("followup", "final")
   needs_followup = category in ("retry", "followup")
   days = 0 if days_to_next is None else int(days_to_next)
-  # TODO actually charge card
   success = db.debrief_call(
     call, had_conversation, charge, needs_followup, notes, days)
+
+  # Charge the client and credit the agent
+  if success:
+    success = strp.charge_for_call(employee, call)
+
   return _response(
       success=success,
       first_calls=db.open_first_calls(),

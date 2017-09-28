@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+import math
 import random
 import re
 
@@ -24,6 +25,10 @@ def gen_conf_code():
   """Creates a new random confirmation code."""
   symbols = "abcdefghijkmnpqrstuvwxyz0123456789"
   return "".join(random.choice(symbols) for _ in range(4))
+
+
+def salt():
+  return random.randint(0, 1000 * 1000 * 1000 * 1000 * 1000)
 
 
 def sid_key(sid):
@@ -570,3 +575,65 @@ def call_history_for_client(digits):
 def call_history_for_employee(employee_id):
   return datamodel.Call.history_for_employee(employee_id)
 
+
+# ---------------------------------------------------------------------------- #
+# Charging customers.                                                          #
+# ---------------------------------------------------------------------------- #
+
+def create_charge(call):
+  # Validate
+  valid = (
+      call.completed and
+      call.had_conversation and
+      call.charged and
+      call.debriefed and
+      (call.duration_seconds is not None) and
+      (call.duration_seconds > 0))
+  if not valid:
+    return
+  charge = datamodel.Charge(id="0", parent=call.key)
+
+  # How much do we charge the client?
+  minutes = int(math.ceil(call.duration_seconds / 60.0))
+  metered_fee = minutes * call.fee_cents_per_minute
+  fee = max(metered_fee, call.fee_cents_minimum)
+  charge.fee_cents = fee
+
+  # How much goes to the agent?
+  commission = int(
+      call.commission_cents_per_minute * (call.duration_seconds / 60.0))
+  charge.commission_cents = commission
+
+  # Store it
+  console.log(
+      "Charge for call {} with duration {}: "
+      "client {} pays {} cents; agent {} earns {} cents".format(
+          call.sid, call.duration_sconds, call.phone,
+          fee, agent.key.id(), commission))
+  charge.put()
+
+
+def mark_charge_result(charge, success, charge_id):
+  charge.succeeded = success
+  charge.stripe_id = charge_id
+  charge.put()
+
+
+def create_cemployee_ledger_entry(
+    employee, etype, source, amount, call=None, payout=None):
+  assert not (call and payout)
+  amount = int(amount)
+  name = "{eid} {ty} {src} {amt} {ts} {salt}".format(
+      eid=employee.key.id(), ty=etype, src=source, amt=amount,
+      ts=now(), salt=salt())
+  ele = datamodel.EmployeeLedgerEntry(
+      id=name, parent=employee.key,
+      source=source, amount_cents=amount, call=call, payout=payout)
+  ele.put()
+  return ele
+
+
+def create_ledger_entry_from_charge(employee, charge):
+  return create_cemployee_ledger_entry(
+      employee, "credit", "commission", charge.commission_cents,
+      call=charge.parent().key.id())

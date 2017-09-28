@@ -1,8 +1,28 @@
 import datetime
+import re
 
 from google.appengine.ext import ndb
 
 from rr import utils
+
+
+# ---------------------------------------------------------------------------- #
+# Utils.                                                                       #
+# ---------------------------------------------------------------------------- #
+
+def positive(prop, value):
+  return value > 0
+
+
+def non_negative(prop, value):
+  return value >= 0
+
+
+PHONE_RE = re.compile(r"^\d{10}$")
+
+
+def phone_number(prop, value):
+  return PHONE_RE.match(value) is not None
 
 
 class Model(ndb.Model):
@@ -14,6 +34,10 @@ class Model(ndb.Model):
     self.hash = utils.id_hash(self)
     self._put()
 
+
+# ---------------------------------------------------------------------------- #
+# Entities.                                                                    #
+# ---------------------------------------------------------------------------- #
 
 class Session(Model):
   """A device session.
@@ -27,7 +51,7 @@ class Session(Model):
   session_id = ndb.StringProperty(required=True)
   user_agent = ndb.StringProperty(required=True)
   confirmation_code = ndb.StringProperty()
-  phone = ndb.StringProperty()
+  phone = ndb.StringProperty(validator=phone_number)
   confirmed = ndb.BooleanProperty(default=False)
   last_confirmed_at = ndb.DateTimeProperty()
 
@@ -42,8 +66,10 @@ class Phone(Model):
   created_at = ndb.DateTimeProperty(required=True)
   last_updated_at = ndb.DateTimeProperty()
   deleted = ndb.BooleanProperty(default=False)
-  bad_confirmations = ndb.IntegerProperty(default=0)
-  unanswered_confirmations = ndb.IntegerProperty(default=0)
+  bad_confirmations = ndb.IntegerProperty(
+      default=0, validator=non_negative)
+  unanswered_confirmations = ndb.IntegerProperty(
+      default=0, validator=non_negative)
   last_malfeasance = ndb.DateTimeProperty()
   confirmed = ndb.BooleanProperty(default=False)
   timezone = ndb.StringProperty()
@@ -141,13 +167,17 @@ class Call(Model):
   hash = ndb.IntegerProperty(required=True)
   created_at = ndb.DateTimeProperty(required=True)
   last_updated_at = ndb.DateTimeProperty()
-  phone = ndb.StringProperty(required=True)
+  phone = ndb.StringProperty(required=True, validator=phone_number)
   sid = ndb.StringProperty(required=True)
-  employee_id = ndb.StringProperty(required=True)
+  employee_id = ndb.StringProperty(required=True, validator=phone_number)
   handle_for_agent = ndb.StringProperty(required=True)
   answered_at = ndb.DateTimeProperty()
-  duration_seconds = ndb.IntegerProperty()
-  fee_cents_per_minute = ndb.IntegerProperty(default=100)
+  duration_seconds = ndb.IntegerProperty(validator=non_negative)
+  fee_cents_per_minute = ndb.IntegerProperty(
+      default=100, validator=positive)
+  fee_cents_minimum = ndb.IntegerProperty(default=500, validator=positive)
+  commission_cents_per_minute = ndb.IntegerProperty(
+      default=50, validator=positive)
   completed = ndb.BooleanProperty(default=False)
   completed_at = ndb.DateTimeProperty()
   had_conversation = ndb.BooleanProperty(default=False)
@@ -179,3 +209,50 @@ class Call(Model):
       cls.debriefed == False,
       cls.completed == True).fetch()
     return sorted(calls, key=lambda call: call.created_at, reverse=True)
+
+
+class Charge(Model):
+  """An instance of a charge to a customer.
+
+  Ancestor: Call
+  Name: (str) "0"
+  """
+  hash = ndb.IntegerProperty(required=True)
+  created_at = ndb.DateTimeProperty(required=True)
+  last_updated_at = ndb.DateTimeProperty()
+  fee_cents = ndb.IntegerProperty(validator=positive)
+  commission_cents = ndb.IntegerProperty(validator=positive)
+  stripe_id = ndb.StringProperty()
+  succeeded = ndb.BooleanProperty()
+
+
+class Payout(Model):
+  """An instance of a paymnent to an employee.
+
+  Ancestor: Employee
+  Name: (str) concatenation of employee id, amount, timestamp, and salt.
+  """
+  hash = ndb.IntegerProperty(required=True)
+  created_at = ndb.DateTimeProperty(required=True)
+  last_updated_at = ndb.DateTimeProperty()
+  amount_cents = ndb.IntegerProperty(validator=positive)
+  succeeded = ndb.BooleanProperty()
+
+
+class EmployeeLedgerEntry(Model):
+  """A credit or debit to an employee's account.
+
+  Ancestor: Employee
+  Name: (str) concatenation of employee id, type, source, amount,
+    timestamp, and salt.
+  """
+  hash = ndb.IntegerProperty(required=True)
+  created_at = ndb.DateTimeProperty(required=True)
+  last_updated_at = ndb.DateTimeProperty()
+  entry_type = ndb.EnumProperty(choices=("credit", "debit"), required=True)
+  source = ndb.EnumProperty(
+      choices=("commission", "cashout", "chargeback", "adhoc"),
+      required=True)
+  amount_cents = ndb.IntegerProperty(required=True, validator=positive)
+  call = ndb.StringProperty()
+  payout = ndb.StringProperty()
