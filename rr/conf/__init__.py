@@ -4,6 +4,7 @@ import os
 import base
 import creds_dev
 import creds_prod
+import finance
 import index
 
 if os.environ['APPLICATION_ID'].startswith('dev'):

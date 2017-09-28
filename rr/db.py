@@ -577,7 +577,7 @@ def call_history_for_employee(employee_id):
 
 
 # ---------------------------------------------------------------------------- #
-# Charging customers.                                                          #
+# Moving money.                                                                #
 # ---------------------------------------------------------------------------- #
 
 def create_charge(call):
@@ -611,16 +611,48 @@ def create_charge(call):
           call.sid, call.duration_sconds, call.phone,
           fee, agent.key.id(), commission))
   charge.put()
+  return charge
 
 
-def mark_charge_result(charge, success, charge_id):
+def mark_charge_result(charge, charge_id):
+  success = charge_id is not None
   charge.succeeded = success
   charge.stripe_id = charge_id
   charge.put()
 
 
+def create_payout(employee):
+  # Validate
+  epi = get_payment_info(employee)
+  valid = (
+      epi.payouts_enabled and
+      (epi.stripe_account_id is not None) and
+      (epi.verification_status == "verified") and
+      employee.setup_done and
+      (employee.balance >= conf.finance.payout_cents_minimum) and
+      ((now() - employee.last_cashout) >= conf.finance.payout_days_lag))
+  if not valid:
+    return
+
+  # Create the payout record
+  name = "{eid} {amt} {ts} {salt}".format(
+      eid=employee.key.id(), amt=employee.balance, ts=now(), salt=salt())
+  payout = datamodel.Payout(id=name, parent=employee.key)
+  payout.amount_cents = employee.balance
+  payout.stripe_account_id = epi.stripe_account_id
+  payout.put()
+  return payout
+
+
+def mark_payout_result(payout, payout_id):
+  success = payout_id is not None
+  payout.succeeded = success
+  payout.stripe_id = payout_id
+  payout.put()
+
+
 # ---------------------------------------------------------------------------- #
-# Employee ledgers and payouts.                                                #
+# Employee ledgers.                                                            #
 # ---------------------------------------------------------------------------- #
 
 @ndb.transactional(xg=True)
@@ -652,6 +684,14 @@ def create_cemployee_ledger_entry(
 
 
 def create_ledger_entry_from_charge(employee, charge):
+  assert charge.succeeded and charge.stripe_id
   return create_cemployee_ledger_entry(
       employee, "credit", "commission", charge.commission_cents,
       call=charge.parent().key.id())
+
+
+def create_ledger_entry_from_payout(employee, payout):
+  assert payout.succeeded and payout.stripe_id
+  return create_cemployee_ledger_entry(
+      employee, "debit", "payout", payout.amount_cents,
+      payout=payout.key.id())

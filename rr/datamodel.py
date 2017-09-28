@@ -3,6 +3,7 @@ import re
 
 from google.appengine.ext import ndb
 
+from rr import conf
 from rr import utils
 
 
@@ -176,10 +177,11 @@ class Call(Model):
   answered_at = ndb.DateTimeProperty()
   duration_seconds = ndb.IntegerProperty(validator=non_negative)
   fee_cents_per_minute = ndb.IntegerProperty(
-      default=100, validator=positive)
-  fee_cents_minimum = ndb.IntegerProperty(default=500, validator=positive)
+      default=conf.finance.fee_cents_per_minute, validator=positive)
+  fee_cents_minimum = ndb.IntegerProperty(
+      default=conf.finance.fee_cents_minimum, validator=positive)
   commission_cents_per_minute = ndb.IntegerProperty(
-      default=50, validator=positive)
+      default=conf.finance.commission_cents_per_minute, validator=positive)
   completed = ndb.BooleanProperty(default=False)
   completed_at = ndb.DateTimeProperty()
   had_conversation = ndb.BooleanProperty(default=False)
@@ -237,7 +239,9 @@ class Payout(Model):
   hash = ndb.IntegerProperty(required=True)
   created_at = ndb.DateTimeProperty(required=True)
   last_updated_at = ndb.DateTimeProperty()
-  amount_cents = ndb.IntegerProperty(validator=positive)
+  amount_cents = ndb.IntegerProperty(required=True, validator=positive)
+  stripe_account_id = ndb.StringProperty(required=True)
+  stripe_id = ndb.StringProperty()
   succeeded = ndb.BooleanProperty()
 
 
@@ -253,7 +257,7 @@ class EmployeeLedgerEntry(Model):
   last_updated_at = ndb.DateTimeProperty()
   entry_type = ndb.EnumProperty(choices=("credit", "debit"), required=True)
   source = ndb.EnumProperty(
-      choices=("commission", "cashout", "chargeback", "adhoc"),
+      choices=("commission", "payout", "chargeback", "adhoc"),
       required=True)
   amount_cents = ndb.IntegerProperty(required=True, validator=positive)
   balance_before = ndb.IntegerProperty(required=True)
