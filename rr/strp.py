@@ -57,6 +57,14 @@ def create_employee_account(employee, stripe_token):
 # ---------------------------------------------------------------------------- #
 
 def _charge_customer(digits, cents, idempotency_token):
+  # Verify
+  if cents < 50:
+    logging.error(
+        "Failed to charge client {} for {} cents: amount too small".format(
+            digits, cents))
+    return
+
+  # Charge
   phone = db.get_phone(digits)
   try:
     stripe_charge = stripe.Charge.create(
@@ -67,8 +75,7 @@ def _charge_customer(digits, cents, idempotency_token):
     return stripe_charge.id
   except stripe.error as e:
     logging.error(
-        "Failed to charge client {} for {} cents: {}".format(
-            phone.key.id(), cents, e))
+        "Failed to charge client {} for {} cents: {}".format(digits, cents, e))
 
 
 def charge_for_call(employee, call):

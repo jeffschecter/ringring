@@ -122,6 +122,8 @@ class Employee(Model):
   given_name = ndb.StringProperty()
   setup_done = ndb.BooleanProperty(default=False)
   verification_fields_needed = ndb.StringProperty()
+  balance_cents = ndb.IntegerProperty(default=0)
+  last_cashout = ndb.DateTimeProperty()
 
 
 class EmployeePaymentInfo(Model):
@@ -254,5 +256,7 @@ class EmployeeLedgerEntry(Model):
       choices=("commission", "cashout", "chargeback", "adhoc"),
       required=True)
   amount_cents = ndb.IntegerProperty(required=True, validator=positive)
+  balance_before = ndb.IntegerProperty(required=True)
+  balance_after = ndb.IntegerProperty(required=True)
   call = ndb.StringProperty()
   payout = ndb.StringProperty()

@@ -619,17 +619,35 @@ def mark_charge_result(charge, success, charge_id):
   charge.put()
 
 
+# ---------------------------------------------------------------------------- #
+# Employee ledgers and payouts.                                                #
+# ---------------------------------------------------------------------------- #
+
+@ndb.transactional(xg=True)
 def create_cemployee_ledger_entry(
     employee, etype, source, amount, call=None, payout=None):
+  # Validate
   assert not (call and payout)
+
+  # Update the employee
+  balance_before = employee.balance
+  balance_adj = amount * (1 if etype == "credit" else -1)
+  new_balance = balance_before + balance_adj
+  employee.balance = new_balance
+  employee.put()
+
+  # Create the ledger entry
   amount = int(amount)
   name = "{eid} {ty} {src} {amt} {ts} {salt}".format(
       eid=employee.key.id(), ty=etype, src=source, amt=amount,
       ts=now(), salt=salt())
   ele = datamodel.EmployeeLedgerEntry(
       id=name, parent=employee.key,
-      source=source, amount_cents=amount, call=call, payout=payout)
+      source=source, amount_cents=amount,
+      balance_before=old_balance, balance_after=new_balance,
+      call=call, payout=payout)
   ele.put()
+
   return ele
 
 
