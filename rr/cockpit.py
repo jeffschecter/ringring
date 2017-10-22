@@ -6,6 +6,7 @@ import flask
 from rr import auth
 from rr import conf
 from rr import db
+from rr import strp
 from rr import tw
 from rr import utils
 

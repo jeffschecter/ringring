@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 
-{% block title %}Employee Cockpit{% endblock %}
+{% block title %}Agent Control Center{% endblock %}
 
 
 {% block pagestyle %}
@@ -161,6 +161,11 @@
     border: 1px solid {{ conf.base.color_darkest }};
   }
 
+  #footer-balance {
+    float: right;
+    margin-right: 20px;
+  }
+
 </style>
 {%block cashoutstyle %}{% endblock %}
 {% endblock %}
@@ -216,7 +221,7 @@
       <input id="hangup-button" type="button" value="Hang up" />
     </div>
     <div id="post-call" class="fadeable">
-      <div id="debrief-header">How'd the call go?s</div>
+      <div id="debrief-header">How'd the call go?</div>
       <form id="debrief-form">
         <div class="radio-option">
           <input type="radio" name="debrief-category" value="retry" id="default-category"
@@ -260,8 +265,10 @@
 
 <div class="bottom-menu">
   <a id="refresh-calls" class="text-button">[refresh]</a>
-  <span id="agent-greeting" class="small-bold">Hello, Agent!</span>
+  <span id="agent-greeting" class="small-bold">Hello</span>
   <span id="messages"></span>
+  <span id="footer-balance" class="text-button"
+   title="Transfer balance to your bank account"></span>
 </div>
 
 </div>

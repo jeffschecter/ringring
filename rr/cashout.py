@@ -76,6 +76,16 @@ def submit_id_document(employee=None, datauri=None, **kwargs):
 
 
 # ---------------------------------------------------------------------------- #
+# Withdrawing balance.                                                         #
+# ---------------------------------------------------------------------------- #
+
+@auth.with_employee_auth
+def submit_withdraw_balance(employee=None, **kwargs):
+  success = strp.payout_full_balance(employee)
+  return _response(employee=employee, success=success)
+
+
+# ---------------------------------------------------------------------------- #
 # Stripe webhooks.                                                             #
 # ---------------------------------------------------------------------------- #
 

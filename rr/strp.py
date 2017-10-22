@@ -71,7 +71,7 @@ def _charge_customer(digits, cents, idempotency_token):
         amount=cents,
         currency="usd",
         customer=phone.stripe_customer_id,
-        idempotency_token=idempotency_token)
+        idempotency_key=idempotency_token)
     return stripe_charge.id
   except stripe.error as e:
     logging.error(
@@ -92,13 +92,14 @@ def charge_for_call(employee, call):
   return success
 
 
-def _transfer_to_employee(employee, cents):
+def _transfer_to_employee(employee, cents, idempotency_token):
   epi = db.get_payment_info(employee)
   try:
     xfr = stripe.Transfer.create(
       amount=cents,
       currency="usd",
-      destination=epi.stripe_account_id)
+      destination=epi.stripe_account_id,
+      idempotency_key=idempotency_token)
     return xfr.id
   except stripe.error as e:
     logging.error(
@@ -109,14 +110,16 @@ def _transfer_to_employee(employee, cents):
 def payout_full_balance(employee):
   payout = db.create_payout(employee)
   if payout:
-    payout_id = _transfer_to_employee(employee, payout.amount_cents)
+    tok = "{}_{}_{}".format(
+        employee.hash, employee.balance_cents, employee.last_cashout)
+    payout_id = _transfer_to_employee(employee, payout.amount_cents, tok)
     success = payout_id is not None
     db.mark_payout_result(payout, payout_id)
   else:
     success = False
 
   if success:
-    db.create_ledger_entry_from_payout(payout)
+    db.create_ledger_entry_from_payout(employee, payout)
   return success
 
 

@@ -12,18 +12,27 @@ from rr import utils
 # ---------------------------------------------------------------------------- #
 
 def positive(prop, value):
-  return value > 0
+  if value > 0:
+    return value
+  else:
+    raise ValueError
 
 
 def non_negative(prop, value):
-  return value >= 0
+  if value >= 0:
+    return value
+  else:
+    raise ValueError
 
 
 PHONE_RE = re.compile(r"^\d{10}$")
 
 
 def phone_number(prop, value):
-  return PHONE_RE.match(value) is not None
+  if PHONE_RE.match(value) is not None:
+    return value
+  else:
+    raise ValueError
 
 
 class Model(ndb.Model):
@@ -255,8 +264,8 @@ class EmployeeLedgerEntry(Model):
   hash = ndb.IntegerProperty(required=True)
   created_at = ndb.DateTimeProperty(required=True)
   last_updated_at = ndb.DateTimeProperty()
-  entry_type = ndb.EnumProperty(choices=("credit", "debit"), required=True)
-  source = ndb.EnumProperty(
+  entry_type = ndb.StringProperty(choices=("credit", "debit"), required=True)
+  source = ndb.StringProperty(
       choices=("commission", "payout", "chargeback", "adhoc"),
       required=True)
   amount_cents = ndb.IntegerProperty(required=True, validator=positive)

@@ -360,7 +360,7 @@ def get_payment_info(employee):
 def get_payment_info_by_stripe_id(stripe_account_id):
   epi = datamodel.EmployeePaymentInfo.get_by_account_id(stripe_account_id)
   if epi is None:
-    raise KeuyError("No payment info found for Stripe account {}".format(
+    raise KeyError("No payment info found for Stripe account {}".format(
         stripe_account_id))
   employee = epi.key.parent().get()
   return employee, epi
@@ -540,9 +540,6 @@ def get_call_by_handle(handle):
 def debrief_call(
     call, had_conversation, charged, needs_followup, notes, days_to_next):
   # Validate
-  if call.debriefed:
-    logging.error("Call {} already debriefed".format(call.sid))
-    return False
   if call.answered_at is None and (had_conversation or charged):
     logging.error("Tried to mark unanswered call {} with:{}".format(
         call.sid,
@@ -605,12 +602,13 @@ def create_charge(call):
   charge.commission_cents = commission
 
   # Store it
-  console.log(
+  logging.info(
       "Charge for call {} with duration {}: "
       "client {} pays {} cents; agent {} earns {} cents".format(
-          call.sid, call.duration_sconds, call.phone,
-          fee, agent.key.id(), commission))
+          call.sid, call.duration_seconds, call.phone,
+          fee, call.employee_id, commission))
   charge.put()
+  logging.info("Created charge: {}".format(charge))
   return charge
 
 
@@ -629,16 +627,17 @@ def create_payout(employee):
       (epi.stripe_account_id is not None) and
       (epi.verification_status == "verified") and
       employee.setup_done and
-      (employee.balance >= conf.finance.payout_cents_minimum) and
-      ((now() - employee.last_cashout) >= conf.finance.payout_days_lag))
+      (employee.balance_cents >= conf.finance.payout_cents_minimum) and
+      ((employee.last_cashout is None) or
+       ((now() - employee.last_cashout) >= conf.finance.payout_days_lag)))
   if not valid:
     return
 
   # Create the payout record
-  name = "{eid} {amt} {ts} {salt}".format(
-      eid=employee.key.id(), amt=employee.balance, ts=now(), salt=salt())
+  name = "{eid}_{amt}_{ts}_{salt}".format(
+      eid=employee.key.id(), amt=employee.balance_cents, ts=now(), salt=salt())
   payout = datamodel.Payout(id=name, parent=employee.key)
-  payout.amount_cents = employee.balance
+  payout.amount_cents = employee.balance_cents
   payout.stripe_account_id = epi.stripe_account_id
   payout.put()
   return payout
@@ -662,22 +661,29 @@ def create_cemployee_ledger_entry(
   assert not (call and payout)
 
   # Update the employee
-  balance_before = employee.balance
+  old_balance = employee.balance_cents
   balance_adj = amount * (1 if etype == "credit" else -1)
-  new_balance = balance_before + balance_adj
-  employee.balance = new_balance
+  new_balance = old_balance + balance_adj
+  employee.balance_cents = new_balance
+  if payout is not None:
+    employee.last_cashout = now()
   employee.put()
 
   # Create the ledger entry
   amount = int(amount)
-  name = "{eid} {ty} {src} {amt} {ts} {salt}".format(
+  name = "{eid}_{ty}_{src}_{amt}_{ts}_{salt}".format(
       eid=employee.key.id(), ty=etype, src=source, amt=amount,
       ts=now(), salt=salt())
   ele = datamodel.EmployeeLedgerEntry(
-      id=name, parent=employee.key,
-      source=source, amount_cents=amount,
-      balance_before=old_balance, balance_after=new_balance,
-      call=call, payout=payout)
+      id=name,
+      parent=employee.key,
+      entry_type=etype,
+      source=source,
+      amount_cents=amount,
+      balance_before=old_balance,
+      balance_after=new_balance,
+      call=call,
+      payout=payout)
   ele.put()
 
   return ele
@@ -687,7 +693,7 @@ def create_ledger_entry_from_charge(employee, charge):
   assert charge.succeeded and charge.stripe_id
   return create_cemployee_ledger_entry(
       employee, "credit", "commission", charge.commission_cents,
-      call=charge.parent().key.id())
+      call=charge.key.parent().id())
 
 
 def create_ledger_entry_from_payout(employee, payout):

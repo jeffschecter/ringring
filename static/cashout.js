@@ -37,6 +37,8 @@
     submit_info: document.querySelector("#cashout-submit-info"),
     submit_full_ssn: document.querySelector("#cashout-submit-full-ssn"),
     submit_id_document: document.querySelector("#cashout-submit-id-document"),
+    back: document.querySelector("#cashout-back-button"),
+    withdraw: document.querySelector("#cashout-submit-withdrawal-button"),
   },
 
   valid: {},
@@ -237,4 +239,30 @@ co.submitIdDocument = function() {
 
 
 co.buttons.submit_id_document.addEventListener(
-    "click", co.submitIdDocument);
+    "click", function() {cp.showDash()});
+
+
+/* ------------------------------------------------------------------------- *
+ * Withdrawals.                                                              *
+ * ------------------------------------------------------------------------- */
+
+co.submitWithdrawBalance = function() {
+  cp.ajaxBlocking(
+      "submit_withdraw_balance", [],
+      function(resp) {
+        if (resp.success == true) {
+          cp.displayMessage(
+              "Funds will appear in your account within 2 business days.",
+              true)
+          cp.showDash();
+        } else {
+          cp.displayMessage("Unable to process withdrawal request.");
+        }
+      });
+};
+
+
+co.buttons.back.addEventListener("click", cp.showDash);
+
+
+co.buttons.withdraw.addEventListener("click", co.submitWithdrawBalance);

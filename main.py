@@ -133,6 +133,11 @@ def submit_id_document():
   return cashout.submit_id_document(**get_post_params())
 
 
+@app.route("/api/submit_withdraw_balance", methods=["POST"])
+def submit_withdraw_balance():
+  return cashout.submit_withdraw_balance(**get_post_params())
+
+
 # ---------------------------------------------------------------------------- #
 # Stripe webhooks.                                                             #
 # ---------------------------------------------------------------------------- #

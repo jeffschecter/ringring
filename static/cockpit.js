@@ -46,6 +46,8 @@ var cp = {
     cashout_document: document.querySelector("#cashout-id-document-container"),
     cashout_pending: document.querySelector("#cashout-pending-container"),
     cashout_withdraw: document.querySelector("#cashout-withdraw-container"),
+    cashout_may_withdraw: document.querySelector(
+        "#cashout-may-withdraw-container"),
   },
 
   tables: {
@@ -74,6 +76,7 @@ var cp = {
     dial: document.querySelector("#initiate-call-button"),
     hangup: document.querySelector("#hangup-button"),
     submit_debrief: document.querySelector("#submit-debrief-button"),
+    cashout: document.querySelector("#footer-balance"),
   },
 
   text: {
@@ -83,7 +86,10 @@ var cp = {
     timezone: document.querySelector("#client-timezone"),
     schedule: document.querySelector("#client-schedule"),
     note: document.querySelector("#client-note"),
-    last_called: document.querySelector("client-last-called"),
+    last_called: document.querySelector("#client-last-called"),
+    balance: document.querySelector("#footer-balance"),
+    cashout_balance: document.querySelector("#cashout-balance"),
+    cashout_last_withdrawal: document.querySelector("#cashout-last-withdrawal"),
   },
 
 };
@@ -96,6 +102,22 @@ cp.isdefined = function(x) {
 
 cp.hasvalue = function(x) {
   return cp.isdefined(x) & (x != null);
+};
+
+
+cp.formatDollars = function(cents) {
+  var roundFn;
+  if (cents == null) {
+    return "$0.00";
+  }
+  if (cents > 0) {
+    roundFn = Math.floor;
+  } else {
+    roundFn = Math.ceil;
+  }
+  return (
+    "$" + roundFn(cents / 100) +
+    "." + ("00" + (cents % 100)).substr(-2, 2))
 };
 
 
@@ -356,7 +378,7 @@ cp.showDetailFactory = function(row) {
  * ------------------------------------------------------------------------- */
 
 cp.updateEmployee = function() {
-  var needDirDep, needPID, needDoc;
+  var needDirDep, needPID, needDoc, bal, mayWithdraw;
   // Parse verification fields needed
   if (cp.hasvalue(cp.employee.verification_fields_needed)) {
     if (typeof(cp.employee.verification_fields_needed == "string")) {
@@ -403,6 +425,23 @@ cp.updateEmployee = function() {
     cp.text.greeting.innerText = "Please finish filling out employee details!"
   } else {
     cp.text.greeting.innerText = "Hello, " + cp.employee.given_name;
+  }
+
+  // What's the agent's balance?
+  bal = cp.formatDollars(cp.employee.balance_cents);
+  cp.write("balance", "[current balance: " + bal + "]");
+  cp.write("cashout_balance", bal);
+  if (cp.employee.last_cashout != null) {
+    cp.write(
+        "cashout_last_withdrawal",
+        ("You last cashed out your balance on " +
+         cp.employee.last_cashout.slice(0, 10) + "."));
+  }
+  mayWithdraw = cp.employee.balance_cents >= PAYOUT_CENTS_MINIMUM;
+  if (mayWithdraw) {
+    cp.show("cashout_may_withdraw");
+  } else {
+    cp.hide("cashout_may_withdraw");
   }
 };
 
@@ -630,7 +669,10 @@ cp.buttons.refresh.addEventListener(
 
 
 cp.buttons.exit_detail.addEventListener(
-    "click", cp.showDash);
+    "click", function() {
+        cp.showDash();
+        cp.ajaxBlocking("available_calls");
+    });
 
 
 cp.buttons.dial.addEventListener(
@@ -643,6 +685,14 @@ cp.buttons.hangup.addEventListener(
 
 cp.buttons.submit_debrief.addEventListener(
     "click", cp.submitDebrief);
+
+
+cp.buttons.cashout.addEventListener(
+    "click", function() {
+      if ((cp.active_client == null) & (cp.employee.setup_done == true)) {
+        cp.activePanel("cashout_withdraw")
+      }
+    });
 
 /* ------------------------------------------------------------------------- *
  * Script.                                                                   *

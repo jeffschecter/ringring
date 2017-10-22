@@ -215,6 +215,19 @@
 
 
 {% block cashout_withdraw %}
+<div class="cashout-info-header">
+  Transfer balance to your checking account
+</div>
+<div class="cashout-explainer">
+  You may transfer your earned balance to your checking account whenever you have accrued at least ${{ conf.finance.payout_cents_minimum / 100 }} in commissions, at most once every {{ conf.finance.payout_days_lag + 1 }} days.
+  <br /><br />
+  Your current balance <span id="cashout-balance"></span>. <span id="cashout-last-withdrawal"></span>
+</div>
+<input id="cashout-back-button" type="button" value="Back" />
+<span id="cashout-may-withdraw-container" class="fadeable">
+  <input id="cashout-submit-withdrawal-button" type="button"
+   value="Transfer to checking account" />
+</span>
 {% endblock %}
 
 
@@ -223,6 +236,9 @@
 <script type="text/javascript">
   var strp = {};
   strp.stripe = Stripe("{{ conf.creds.stripe_publishable_token }}");
+</script>
+<script type="text/javascript">
+  var PAYOUT_CENTS_MINIMUM = {{ conf.finance.payout_cents_minimum }};
 </script>
 <script src="static/cashout.js"></script>
 {% endblock %}
