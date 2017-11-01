@@ -1,7 +1,6 @@
 import binascii
 import io
 import logging
-import sys
 
 import flask
 

@@ -281,4 +281,5 @@
  src="https://media.twiliocdn.com/sdk/js/client/v1.4/twilio.min.js"></script>
 <script src="static/cockpit.js"></script>
 {% block cashoutscripts %}{% endblock %}
+{% if is_admin %}{% block adminscripts %}{% endblock %}{% endif %}
 {% endblock %}

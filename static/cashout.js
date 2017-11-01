@@ -239,7 +239,7 @@ co.submitIdDocument = function() {
 
 
 co.buttons.submit_id_document.addEventListener(
-    "click", function() {cp.showDash()});
+    "click", co.submitIdDocument);
 
 
 /* ------------------------------------------------------------------------- *

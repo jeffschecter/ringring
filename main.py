@@ -4,6 +4,7 @@ import urllib
 
 import flask
 
+from rr import admin
 from rr import auth
 from rr import cashout
 from rr import cockpit
@@ -53,8 +54,8 @@ def get_strp_webhook_event(secret):
 
 def auth_from_query():
   req = flask.request
-  return bool(auth.authed_employee_from_sid(
-      urllib.unquote(req.query_string), req.user_agent.string))
+  return auth.authed_employee_from_sid(
+      urllib.unquote(req.query_string), req.user_agent.string)
 
 
 @app.errorhandler(500)
@@ -160,10 +161,13 @@ def strp_events_connect():
 
 @app.route("/cockpit", methods=["GET"])
 def serve_cockpit():
-  if auth_from_query():
+  employee = auth_from_query()
+  is_admin = bool(employee and (employee.key.id() in conf.creds.admin_phones))
+  if bool(employee):
     return flask.render_template(
-        "cockpit_with_cashout.html",
-        conf=conf)
+        "cockpit_full.html",
+        conf=conf,
+        is_admin=is_admin)
   else:
     return flask.redirect("/", code=302)
 
@@ -210,3 +214,12 @@ def tw_dial():
 @app.route("/api/tw_status", methods=["POST"])
 def tw_status():
   return cockpit.tw_status(**get_tw_webhook_params())
+
+
+# ---------------------------------------------------------------------------- #
+# Admin endpoints.                                                             #
+# ---------------------------------------------------------------------------- #
+
+@app.route("/api/admin_create_employee", methods=["POST"])
+def admin_create_employee():
+  return admin.create_employee(**get_post_params())

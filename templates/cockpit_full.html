@@ -162,11 +162,9 @@
     Stripe has asked us for your full Social Security number.
   </div>
   <div class="cashout-explainer">
-    As an extra identity verification step, Stripe sometimes asks us for additional information about the holder of a bank account in order to comply with federal <a href="https://en.wikipedia.org/wiki/Know_your_customer" target="_blank">Know Your Customer</a> regulations. This is a pain in the butt for us, but helps the government catch terrorists and mafiosos! In theory.
+    As an extra identity verification step, Stripe sometimes asks us for additional information about the holder of a bank account in order to comply with federal <a href="https://en.wikipedia.org/wiki/Know_your_customer" target="_blank">Know Your Customer</a> regulations. This is a pain in the butt for us, but helps the government catch terrorists and mafiosos! Or something.
     <br /><br />
-    Whatever.
-    <br /><br />
-    Your full SSN is not stored anywhere in our database. We just pass it on securely straight through to Stripe, who presumably cross-references it with your bank to make sure you're a real human being and not on a watch list for money laundering or something.
+    Your full SSN is not stored anywhere in our database. We just pass it on securely straight through to Stripe, who presumably cross-references it with your bank to make sure you're a real human being and not on a money laundering watch list.
   </div>
   <div class="cashout-info-block">
     <div class="cashout-info-header">SSN</div>
@@ -241,4 +239,10 @@
   var PAYOUT_CENTS_MINIMUM = {{ conf.finance.payout_cents_minimum }};
 </script>
 <script src="static/cashout.js"></script>
+{% endblock %}
+
+
+
+{% block adminscripts %}
+<script src="static/admin.js"></script>
 {% endblock %}
